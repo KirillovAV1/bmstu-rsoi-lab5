@@ -2,7 +2,7 @@ fullnameOverride: payment-microservice
 
 image:
   repository: kirillovav1/payment
-  tag: lab4
+  tag: lab5
   pullPolicy: IfNotPresent
 
 service:

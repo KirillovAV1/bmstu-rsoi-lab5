@@ -2,7 +2,7 @@ fullnameOverride: reservation-microservice
 
 image:
   repository: kirillovav1/reservation
-  tag: lab4
+  tag: lab5
   pullPolicy: IfNotPresent
 
 service:

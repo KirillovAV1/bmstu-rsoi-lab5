@@ -2,7 +2,7 @@ fullnameOverride: gateway-microservice
 
 image:
   repository: kirillovav1/gateway
-  tag: lab4-v3
+  tag: lab5
   pullPolicy: IfNotPresent
 
 service:

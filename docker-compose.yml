@@ -2,7 +2,7 @@ version: "3"
 services:
   postgres:
     image: postgres:13
-    container_name: postgres_lab4
+    container_name: postgres_lab5
     restart: on-failure
     environment:
       POSTGRES_USER: postgres
@@ -18,8 +18,8 @@ services:
     build:
       context: ./reservation
       dockerfile: Dockerfile
-    image: kirillovav1/reservation:lab4
-    container_name: reservation_service_l4
+    image: kirillovav1/reservation:lab5
+    container_name: reservation_service_lab5
     restart: on-failure
     environment:
       DB_DSN: postgresql://program:test@postgres:5432/reservations
@@ -32,8 +32,8 @@ services:
     build:
       context: ./payment
       dockerfile: Dockerfile
-    image: kirillovav1/payment:lab4
-    container_name: payment_service_l4
+    image: kirillovav1/payment:lab5
+    container_name: payment_service_lab5
     restart: on-failure
     environment:
       DB_DSN: postgresql://program:test@postgres:5432/payments
@@ -46,8 +46,8 @@ services:
     build:
       context: ./loyalty
       dockerfile: Dockerfile
-    image: kirillovav1/loyalty:lab4
-    container_name: loyalty_service_l4
+    image: kirillovav1/loyalty:lab5
+    container_name: loyalty_service_lab5
     restart: on-failure
     environment:
       DB_DSN: postgresql://program:test@postgres:5432/loyalties
@@ -58,7 +58,7 @@ services:
 
   rabbitmq:
     image: rabbitmq:3.10.7-management
-    container_name: rabbitmq_l4
+    container_name: rabbitmq_lab5
     restart: always
     environment:
       - RABBITMQ_DEFAULT_USER=program
@@ -71,8 +71,8 @@ services:
     build:
       context: ./gateway
       dockerfile: Dockerfile
-    image: kirillovav1/gateway:lab4
-    container_name: gateway_service_l4
+    image: kirillovav1/gateway:lab5
+    container_name: gateway_service_lab5
     restart: on-failure
     environment:
       LOYALTY_URL: http://loyalty:8050
@@ -91,8 +91,8 @@ services:
       - "8080:8080"
 
   gateway-worker:
-    image: kirillovav1/gateway:lab4
-    container_name: gateway_worker_l4
+    image: kirillovav1/gateway:lab5
+    container_name: gateway_worker_lab5
     restart: on-failure
     depends_on:
       - gateway

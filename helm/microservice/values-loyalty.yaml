@@ -2,7 +2,7 @@ fullnameOverride: loyalty-microservice
 
 image:
   repository: kirillovav1/loyalty
-  tag: lab4
+  tag: lab5
   pullPolicy: IfNotPresent
 
 service:
