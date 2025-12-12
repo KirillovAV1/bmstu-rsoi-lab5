@@ -26,7 +26,7 @@ ingress:
   annotations:
     kubernetes.io/ingress.class: nginx
   hosts:
-    - host: 158.160.138.191.nip.io
+    - host: lab5.158.160.138.191.nip.io
       paths:
         - path: /
           pathType: Prefix

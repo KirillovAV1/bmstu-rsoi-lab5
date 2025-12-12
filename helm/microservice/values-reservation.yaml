@@ -12,5 +12,5 @@ service:
   targetPort: 8070
 
 env:
-  DB_DSN: postgresql://program:test@postgres-postgresql:5432/reservations
+  DB_DSN: postgresql://program:test@postgres-lab5-postgresql:5432/reservations
 

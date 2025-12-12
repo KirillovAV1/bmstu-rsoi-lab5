@@ -12,6 +12,6 @@ service:
   targetPort: 8050
 
 env:
-  DB_DSN: postgresql://program:test@postgres-postgresql:5432/loyalties
+  DB_DSN: postgresql://program:test@postgres-lab5-postgresql:5432/loyalties
 
 
