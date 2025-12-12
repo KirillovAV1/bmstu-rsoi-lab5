@@ -1,0 +1,33 @@
+fullnameOverride: gateway-microservice
+
+image:
+  repository: kirillovav1/gateway
+  tag: lab4-v3
+  pullPolicy: IfNotPresent
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+
+env:
+  LOYALTY_URL: http://loyalty-microservice:8050
+  PAYMENT_URL: http://payment-microservice:8060
+  RESERVATION_URL: http://reservation-microservice:8070
+  RABBITMQ_HOST: rabbitmq
+  RABBITMQ_PORT: "5672"
+  RABBITMQ_USER: program
+  RABBITMQ_PASSWORD: test
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    kubernetes.io/ingress.class: nginx
+  hosts:
+    - host: 158.160.138.191.nip.io
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: [ ]

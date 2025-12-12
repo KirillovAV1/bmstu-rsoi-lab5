@@ -1,0 +1,16 @@
+fullnameOverride: reservation-microservice
+
+image:
+  repository: kirillovav1/reservation
+  tag: lab4
+  pullPolicy: IfNotPresent
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: 8070
+  targetPort: 8070
+
+env:
+  DB_DSN: postgresql://program:test@postgres-postgresql:5432/reservations
+

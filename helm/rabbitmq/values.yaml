@@ -1,0 +1,3 @@
+image: "rabbitmq:4.2.1-management"
+username: program
+password: test

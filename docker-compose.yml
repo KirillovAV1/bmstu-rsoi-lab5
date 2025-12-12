@@ -1,0 +1,108 @@
+version: "3"
+services:
+  postgres:
+    image: postgres:13
+    container_name: postgres_lab4
+    restart: on-failure
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./postgres/:/docker-entrypoint-initdb.d/
+    ports:
+      - "5432:5432"
+
+  reservation:
+    build:
+      context: ./reservation
+      dockerfile: Dockerfile
+    image: kirillovav1/reservation:lab4
+    container_name: reservation_service_l4
+    restart: on-failure
+    environment:
+      DB_DSN: postgresql://program:test@postgres:5432/reservations
+    depends_on:
+      - postgres
+    ports:
+      - "8070:8070"
+
+  payment:
+    build:
+      context: ./payment
+      dockerfile: Dockerfile
+    image: kirillovav1/payment:lab4
+    container_name: payment_service_l4
+    restart: on-failure
+    environment:
+      DB_DSN: postgresql://program:test@postgres:5432/payments
+    depends_on:
+      - postgres
+    ports:
+      - "8060:8060"
+
+  loyalty:
+    build:
+      context: ./loyalty
+      dockerfile: Dockerfile
+    image: kirillovav1/loyalty:lab4
+    container_name: loyalty_service_l4
+    restart: on-failure
+    environment:
+      DB_DSN: postgresql://program:test@postgres:5432/loyalties
+    depends_on:
+      - postgres
+    ports:
+      - "8050:8050"
+
+  rabbitmq:
+    image: rabbitmq:3.10.7-management
+    container_name: rabbitmq_l4
+    restart: always
+    environment:
+      - RABBITMQ_DEFAULT_USER=program
+      - RABBITMQ_DEFAULT_PASS=test
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    image: kirillovav1/gateway:lab4
+    container_name: gateway_service_l4
+    restart: on-failure
+    environment:
+      LOYALTY_URL: http://loyalty:8050
+      PAYMENT_URL: http://payment:8060
+      RESERVATION_URL: http://reservation:8070
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: program
+      RABBITMQ_PASSWORD: test
+    depends_on:
+      - loyalty
+      - payment
+      - reservation
+      - rabbitmq
+    ports:
+      - "8080:8080"
+
+  gateway-worker:
+    image: kirillovav1/gateway:lab4
+    container_name: gateway_worker_l4
+    restart: on-failure
+    depends_on:
+      - gateway
+      - rabbitmq
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: program
+      RABBITMQ_PASSWORD: test
+    command: ["python", "-m", "app.consumer"]
+
+volumes:
+  db-data:

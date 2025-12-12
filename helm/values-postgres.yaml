@@ -1,0 +1,9 @@
+auth:
+  username: program
+  password: test
+  database: postgres
+
+primary:
+  persistence:
+    enabled: true
+    size: 8Gi

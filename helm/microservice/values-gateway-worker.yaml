@@ -1,0 +1,23 @@
+fullnameOverride: gateway-worker
+
+image:
+  repository: kirillovav1/gateway
+  tag: lab4-v3
+  pullPolicy: IfNotPresent
+
+service:
+  enabled: false
+
+env:
+  RABBITMQ_HOST: rabbitmq
+  RABBITMQ_PORT: "5672"
+  RABBITMQ_USER: program
+  RABBITMQ_PASSWORD: test
+
+command:
+  - python
+  - -m
+  - app.consumer
+
+resources: {}
+

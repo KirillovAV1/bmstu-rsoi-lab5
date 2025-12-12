@@ -1,0 +1,17 @@
+fullnameOverride: loyalty-microservice
+
+image:
+  repository: kirillovav1/loyalty
+  tag: lab4
+  pullPolicy: IfNotPresent
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: 8050
+  targetPort: 8050
+
+env:
+  DB_DSN: postgresql://program:test@postgres-postgresql:5432/loyalties
+
+

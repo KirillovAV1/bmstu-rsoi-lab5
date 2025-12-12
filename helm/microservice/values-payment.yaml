@@ -1,0 +1,16 @@
+fullnameOverride: payment-microservice
+
+image:
+  repository: kirillovav1/payment
+  tag: lab4
+  pullPolicy: IfNotPresent
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: 8060
+  targetPort: 8060
+
+env:
+  DB_DSN: postgresql://program:test@postgres-postgresql:5432/payments
+
