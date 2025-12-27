@@ -66,6 +66,7 @@ class LoyaltyInfoResponse(BaseModel):
     discount: int
     reservationCount: int
 
+
 class UserInfoResponse(BaseModel):
     reservations: List[ReservationResponse]
     loyalty: LoyaltyInfoResponse | dict
@@ -104,3 +105,14 @@ class ValidationErrorResponse(BaseModel):
 class GetHotelsQuery(BaseModel):
     page: int = Field(0, ge=0)
     size: int = Field(1, ge=1, le=100)
+
+
+class AuthorizeRequest(BaseModel):
+    username: str
+    password: str
+
+
+class AuthorizeResponse(BaseModel):
+    access_token: str
+    token_type: str
+    expires_in: int
