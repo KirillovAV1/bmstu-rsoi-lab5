@@ -33,113 +33,31 @@ jobs:
           version: latest
 
       - name: Install yc CLI
-        shell: bash
         run: |
           curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
           echo "$HOME/yandex-cloud/bin" >> $GITHUB_PATH
 
-      - name: Debug YC_SA_KEY_B64 (safe)
-        shell: bash
-        env:
-          YC_SA_KEY_B64: ${{ secrets.YC_SA_KEY_B64 }}
-        run: |
-          set -euo pipefail
-          echo "LEN=${#YC_SA_KEY_B64}"
-          python - <<'PY'
-          import os, re, hashlib
-          s = os.environ.get("YC_SA_KEY_B64","")
-          print("empty:", s == "")
-          print("starts_with:", repr(s[:12]))
-          print("ends_with:", repr(s[-12:]))
-          bad = re.findall(r"[^A-Za-z0-9+/=]", s)
-          print("non_base64_chars_count:", len(bad))
-          if bad:
-            uniq = sorted(set(bad))
-            print("non_base64_chars_sample:", repr("".join(uniq[:20])))
-          print("sha256(prefix):", hashlib.sha256(s[:256].encode()).hexdigest())
-          PY
-          echo "${YC_SA_KEY_B64}" | head -c 80 | sed 's/./*/g'
-          echo
-
       - name: Configure yc
-        shell: bash
-        env:
-          YC_SA_KEY_B64: ${{ secrets.YC_SA_KEY_B64 }}
-          YC_CLOUD_ID: ${{ secrets.YC_CLOUD_ID }}
-          YC_FOLDER_ID: ${{ secrets.YC_FOLDER_ID }}
         run: |
-          set -euo pipefail
-
-          echo "raw_len=${#YC_SA_KEY_B64}"
-
-          cleaned="$(printf '%s' "${YC_SA_KEY_B64}" | tr -d '\r\n ')"
-          echo "cleaned_len=${#cleaned}"
-
-          python - <<'PY'
-          import os, re
-          s=os.environ["CLEANED"]
-          bad=re.findall(r"[^A-Za-z0-9+/=]", s)
-          print("cleaned_non_base64_chars_count:", len(bad))
-          if bad:
-            print("cleaned_non_base64_chars:", sorted(set(bad))[:50])
-          PY
-        env:
-          YC_SA_KEY_B64: ${{ secrets.YC_SA_KEY_B64 }}
-          YC_CLOUD_ID: ${{ secrets.YC_CLOUD_ID }}
-          YC_FOLDER_ID: ${{ secrets.YC_FOLDER_ID }}
-          CLEANED: ${{ secrets.YC_SA_KEY_B64 }}
-
-      - name: Decode sa-key.json (debug)
-        shell: bash
-        env:
-          YC_SA_KEY_B64: ${{ secrets.YC_SA_KEY_B64 }}
-        run: |
-          set -euo pipefail
-          cleaned="$(printf '%s' "${YC_SA_KEY_B64}" | tr -d '\r\n ')"
-          if ! printf '%s' "$cleaned" | base64 --decode > sa-key.json 2> base64_err.txt; then
-            echo "base64_decode_failed"
-            echo "base64_stderr:"
-            cat base64_err.txt
-            echo "tail_of_cleaned (masked):"
-            printf '%s' "$cleaned" | tail -c 120 | sed 's/./*/g'
-            echo
-            exit 1
-          fi
-          echo "sa-key.json bytes: $(wc -c < sa-key.json)"
-          head -c 40 sa-key.json | sed 's/./*/g'
-          echo
-          python - <<'PY'
-          import json
-          with open("sa-key.json","r",encoding="utf-8") as f:
-              json.load(f)
-          print("json_ok")
-          PY
-
-      - name: Configure yc (final)
-        shell: bash
-        env:
-          YC_CLOUD_ID: ${{ secrets.YC_CLOUD_ID }}
-          YC_FOLDER_ID: ${{ secrets.YC_FOLDER_ID }}
-        run: |
-          set -euo pipefail
+          echo "${YC_SA_KEY}" > sa-key.json
           yc config set cloud-id "${YC_CLOUD_ID}"
           yc config set folder-id "${YC_FOLDER_ID}"
           yc config set service-account-key sa-key.json
+        env:
+          YC_SA_KEY: ${{ secrets.YC_SA_KEY }}
+          YC_CLOUD_ID: ${{ secrets.YC_CLOUD_ID }}
+          YC_FOLDER_ID: ${{ secrets.YC_FOLDER_ID }}
 
       - name: Configure kubeconfig
-        shell: bash
-        env:
-          YC_K8S_CLUSTER_ID: ${{ secrets.YC_K8S_CLUSTER_ID }}
         run: |
-          set -euo pipefail
           yc managed-kubernetes cluster get-credentials "${YC_K8S_CLUSTER_ID}" --external --force
           kubectl config get-contexts
           kubectl cluster-info
+        env:
+          YC_K8S_CLUSTER_ID: ${{ secrets.YC_K8S_CLUSTER_ID }}
 
       - name: Ensure namespace exists
-        shell: bash
         run: |
-          set -euo pipefail
           kubectl get ns "${K8S_NAMESPACE}" || kubectl create ns "${K8S_NAMESPACE}"
 
       - name: Login to Docker Hub
@@ -149,23 +67,12 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push Docker images
-        shell: bash
         run: |
-          set -euo pipefail
           docker compose build
           docker compose push
 
       - name: Create/Update auth0 secret
-        shell: bash
-        env:
-          AUTH0_CLIENT_ID: ${{ secrets.AUTH0_CLIENT_ID }}
-          AUTH0_CLIENT_SECRET: ${{ secrets.AUTH0_CLIENT_SECRET }}
-          AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
-          AUTH0_ISSUER: ${{ secrets.AUTH0_ISSUER }}
-          AUTH0_JWKS_URI: ${{ secrets.AUTH0_JWKS_URI }}
-          AUTH0_AUDIENCE: ${{ secrets.AUTH0_AUDIENCE }}
         run: |
-          set -euo pipefail
           kubectl -n "${K8S_NAMESPACE}" delete secret auth0-env --ignore-not-found
           kubectl -n "${K8S_NAMESPACE}" create secret generic auth0-env \
             --from-literal=AUTH0_CLIENT_ID="${AUTH0_CLIENT_ID}" \
@@ -174,51 +81,46 @@ jobs:
             --from-literal=AUTH0_ISSUER="${AUTH0_ISSUER}" \
             --from-literal=AUTH0_JWKS_URI="${AUTH0_JWKS_URI}" \
             --from-literal=AUTH0_AUDIENCE="${AUTH0_AUDIENCE}"
+        env:
+          AUTH0_CLIENT_ID: ${{ secrets.AUTH0_CLIENT_ID }}
+          AUTH0_CLIENT_SECRET: ${{ secrets.AUTH0_CLIENT_SECRET }}
+          AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
+          AUTH0_ISSUER: ${{ secrets.AUTH0_ISSUER }}
+          AUTH0_JWKS_URI: ${{ secrets.AUTH0_JWKS_URI }}
+          AUTH0_AUDIENCE: ${{ secrets.AUTH0_AUDIENCE }}
 
       - name: Deploy reservation
-        shell: bash
         run: |
-          set -euo pipefail
           helm upgrade --install reservation-lab5 ./helm/microservice \
             -f ./helm/microservice/values-reservation.yaml \
             -n "${K8S_NAMESPACE}"
 
       - name: Deploy loyalty
-        shell: bash
         run: |
-          set -euo pipefail
           helm upgrade --install loyalty-lab5 ./helm/microservice \
             -f ./helm/microservice/values-loyalty.yaml \
             -n "${K8S_NAMESPACE}"
 
       - name: Deploy payment
-        shell: bash
         run: |
-          set -euo pipefail
           helm upgrade --install payment-lab5 ./helm/microservice \
             -f ./helm/microservice/values-payment.yaml \
             -n "${K8S_NAMESPACE}"
 
       - name: Deploy gateway
-        shell: bash
         run: |
-          set -euo pipefail
           helm upgrade --install gateway-lab5 ./helm/microservice \
             -f ./helm/microservice/values-gateway.yaml \
             -n "${K8S_NAMESPACE}"
 
       - name: Deploy gateway-worker
-        shell: bash
         run: |
-          set -euo pipefail
           helm upgrade --install gateway-worker-lab5 ./helm/microservice \
             -f ./helm/microservice/values-gateway-worker.yaml \
             -n "${K8S_NAMESPACE}"
 
       - name: Wait for services to become Ready
-        shell: bash
         run: |
-          set -euo pipefail
           kubectl wait -n "${K8S_NAMESPACE}" --for=condition=available deploy/reservation-microservice --timeout=180s
           kubectl wait -n "${K8S_NAMESPACE}" --for=condition=available deploy/loyalty-microservice --timeout=180s
           kubectl wait -n "${K8S_NAMESPACE}" --for=condition=available deploy/payment-microservice --timeout=180s
