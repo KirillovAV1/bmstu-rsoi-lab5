@@ -21,6 +21,8 @@ ingress:
   hosts: []
   tls: []
 
+existingSecret: ""
+
 env: {}
 
 command: []

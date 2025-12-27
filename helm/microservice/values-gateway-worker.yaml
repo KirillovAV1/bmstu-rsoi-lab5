@@ -2,8 +2,10 @@ fullnameOverride: gateway-worker
 
 image:
   repository: kirillovav1/gateway
-  tag: lab5
+  tag: v3
   pullPolicy: IfNotPresent
+
+existingSecret: auth0-env
 
 service:
   enabled: false

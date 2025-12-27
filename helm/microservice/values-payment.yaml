@@ -2,8 +2,10 @@ fullnameOverride: payment-microservice
 
 image:
   repository: kirillovav1/payment
-  tag: lab5
+  tag: v3
   pullPolicy: IfNotPresent
+
+existingSecret: auth0-env
 
 service:
   enabled: true

@@ -20,9 +20,11 @@ spec:
         - name: {{ include "microservice.name" . }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+
           {{- if .Values.command }}
           command: {{ toJson .Values.command }}
           {{- end }}
+
           {{- if .Values.args }}
           args: {{ toJson .Values.args }}
           {{- end }}
@@ -31,6 +33,12 @@ spec:
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
+          {{- end }}
+
+          {{- if .Values.existingSecret }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.existingSecret | quote }}
           {{- end }}
 
           env:

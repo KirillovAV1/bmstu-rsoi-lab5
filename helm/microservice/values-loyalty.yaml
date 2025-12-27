@@ -2,8 +2,10 @@ fullnameOverride: loyalty-microservice
 
 image:
   repository: kirillovav1/loyalty
-  tag: lab5
+  tag: v3
   pullPolicy: IfNotPresent
+
+existingSecret: auth0-env
 
 service:
   enabled: true
