@@ -1,7 +1,5 @@
 # Лабораторная работа #5
 
-![GitHub Classroom Workflow](../../workflows/GitHub%20Classroom%20Workflow/badge.svg?branch=master)
-
 ## OAuth2 Authorization
 
 ### Формулировка
