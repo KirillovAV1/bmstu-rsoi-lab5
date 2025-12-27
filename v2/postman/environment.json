@@ -1,35 +1,35 @@
 {
   "id": "acc90f86-88ad-444e-924e-6f48f6ee7711",
-  "name": "[rsoi][lab5] Flight Service",
+  "name": "[rsoi][lab5] Hotels Service",
   "values": [
     {
       "key": "serviceUrl",
-      "value": "",
+      "value": "http://0.0.0.0:8080",
       "enabled": true
     },
     {
       "key": "identityProviderUrl",
-      "value": "",
+      "value": "http://0.0.0.0:8080",
       "enabled": true
     },
     {
       "key": "username",
-      "value": "",
+      "value": "bmstu_lab5@rsoi.com",
       "enabled": true
     },
     {
       "key": "password",
-      "value": "",
+      "value": "bmstu_lab5@rsoi.com",
       "enabled": true
     },
     {
       "key": "clientId",
-      "value": "",
+      "value": "7JKaXrUahjinWJNyvZUF7BM6yUwauadj",
       "enabled": true
     },
     {
       "key": "clientSecret",
-      "value": "",
+      "value": "Ob8GCvFDM8VCZEcqrtPsTtLD2ZVWwf_Qp53k5b3Vp2Nq9mWvdrRt1CpDkFyJQyAI",
       "enabled": true
     }
   ],
