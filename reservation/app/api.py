@@ -1,17 +1,13 @@
-from fastapi import APIRouter, Header, Body, Depends, HTTPException, Response
+from fastapi import APIRouter, Body, Depends, HTTPException, Response, Request
 from uuid import uuid4
 from .models import *
 import psycopg2.extras
 from .db import get_conn
 from .utils import *
+from .auth import verify_jwt, username_from_claims
 
-router = APIRouter()
 psycopg2.extras.register_uuid()
-
-
-@router.get("/manage/health")
-def health():
-    return {"status": "ok"}
+router = APIRouter(dependencies=[Depends(verify_jwt)])
 
 
 @router.get("/api/v1/hotels")
@@ -39,7 +35,10 @@ def list_hotels(params: GetHotelsQuery = Depends()):
 
 
 @router.get("/api/v1/me")
-def user_reservations(x_user_name: str = Header(..., alias="X-User-Name")):
+def user_reservations(request: Request):
+    claims = request.state.claims
+    username = username_from_claims(claims)
+
     with get_conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         cur.execute(
             """
@@ -48,7 +47,7 @@ def user_reservations(x_user_name: str = Header(..., alias="X-User-Name")):
             JOIN hotels ON reservation.hotel_id = hotels.id
             WHERE reservation.username = %s;
             """,
-            (x_user_name,),
+            (username,),
         )
         rows = cur.fetchall()
 
@@ -80,9 +79,12 @@ def get_hotel(hotelUid: UUID):
 
 @router.post("/api/v1/reservations")
 def create_reservation(
-        x_user_name: str = Header(..., alias="X-User-Name"),
+        request: Request,
         body: dict = Body(...),
 ):
+    claims = request.state.claims
+    username = username_from_claims(claims)
+
     reservation_uid = uuid4()
 
     try:
@@ -116,7 +118,7 @@ def create_reservation(
             """,
             (
                 reservation_uid,
-                x_user_name,
+                username,
                 payment_uid,
                 hotel_row["id"],
                 status_value,
@@ -132,9 +134,12 @@ def create_reservation(
 
 @router.get("/api/v1/reservations/{reservationUid}")
 def get_reservation(
+        request: Request,
         reservationUid: UUID,
-        x_user_name: str = Header(..., alias="X-User-Name"),
 ):
+    claims = request.state.claims
+    username = username_from_claims(claims)
+
     with get_conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         cur.execute(
             """
@@ -147,7 +152,7 @@ def get_reservation(
         )
         row = cur.fetchone()
 
-    if not row or row["username"] != x_user_name:
+    if not row or row["username"] != username:
         raise HTTPException(status_code=404, detail="Билет не найден")
 
     return build_reservation_from_row(row)
@@ -155,16 +160,19 @@ def get_reservation(
 
 @router.patch("/api/v1/reservations/{reservationUid}/cancel", status_code=204)
 def cancel_reservation(
+        request: Request,
         reservationUid: UUID,
-        x_user_name: str = Header(..., alias="X-User-Name")
 ):
+    claims = request.state.claims
+    username = username_from_claims(claims)
+
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute("""
             UPDATE reservation
             SET status = 'CANCELED'
             WHERE reservation_uid = %s
               AND username = %s;
-        """, (reservationUid, x_user_name))
+        """, (reservationUid, username))
 
         if cur.rowcount == 0:
             raise HTTPException(status_code=404, detail="Бронь не найдена")

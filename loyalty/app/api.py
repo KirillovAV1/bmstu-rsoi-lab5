@@ -1,36 +1,40 @@
-from fastapi import APIRouter, Header, Body
+from fastapi import APIRouter, Body, Request, Depends
 from .models import LoyaltyInfoResponse
 from .db import get_conn
 import psycopg2.extras
 
-router = APIRouter()
+from .auth import verify_jwt, username_from_claims
 
-
-@router.get("/manage/health")
-def health():
-    return {"status": "ok"}
+router = APIRouter(dependencies=[Depends(verify_jwt)])
 
 
 @router.get("/api/v1/me")
-def user_loyalty(x_user_name: str = Header(..., alias="X-User-Name")):
+def user_loyalty(request: Request):
+    claims = request.state.claims
+    print(claims)
+    username = username_from_claims(claims)
+
     with get_conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         cur.execute("""
             SELECT status, discount, reservation_count as "reservationCount"
             FROM loyalty
             WHERE username = %s;
-        """, (x_user_name,))
+        """, (username,))
         row = cur.fetchone()
-
     if not row:
         return {}
 
     return LoyaltyInfoResponse(**row)
 
+
 @router.patch("/api/v1/loyalty")
 def update_loyalty(
-        x_user_name: str = Header(..., alias="X-User-Name"),
+        request: Request,
         delta: int = Body(..., embed=True),
 ):
+    claims = request.state.claims
+    username = username_from_claims(claims)
+
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute("""
             UPDATE loyalty
@@ -43,10 +47,8 @@ def update_loyalty(
                 END
             WHERE username = %s
             RETURNING reservation_count, status;
-        """, (delta, delta, delta, x_user_name))
+        """, (delta, delta, delta, username))
 
         conn.commit()
 
-    return {
-        "message": "Loyalty обновлена"
-    }
+    return {"message": "Loyalty обновлена"}
