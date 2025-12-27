@@ -19,7 +19,7 @@ services:
     build:
       context: ./reservation
       dockerfile: Dockerfile
-    image: kirillovav1/reservation:lab5
+    image: kirillovav1/reservation:v3
     container_name: reservation_service_lab5
     restart: on-failure
     environment:
@@ -35,7 +35,7 @@ services:
     build:
       context: ./payment
       dockerfile: Dockerfile
-    image: kirillovav1/payment:lab5
+    image: kirillovav1/payment:v3
     container_name: payment_service_lab5
     restart: on-failure
     environment:
@@ -51,7 +51,7 @@ services:
     build:
       context: ./loyalty
       dockerfile: Dockerfile
-    image: kirillovav1/loyalty:lab5
+    image: kirillovav1/loyalty:v3
     container_name: loyalty_service_lab5
     restart: on-failure
     environment:
@@ -78,7 +78,7 @@ services:
     build:
       context: ./gateway
       dockerfile: Dockerfile
-    image: kirillovav1/gateway:lab5
+    image: kirillovav1/gateway:v3
     container_name: gateway_service_lab5
     restart: on-failure
     environment:
@@ -97,7 +97,6 @@ services:
 
       AUTH0_ISSUER: ${AUTH0_ISSUER}
       AUTH0_JWKS_URI: ${AUTH0_JWKS_URI}
-
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
     depends_on:
       - loyalty
@@ -108,7 +107,7 @@ services:
       - "8080:8080"
 
   gateway-worker:
-    image: kirillovav1/gateway:lab5
+    image: kirillovav1/gateway:v3
     container_name: gateway_worker_lab5
     restart: on-failure
     depends_on:
@@ -122,7 +121,7 @@ services:
 
       AUTH0_ISSUER: ${AUTH0_ISSUER}
       AUTH0_JWKS_URI: ${AUTH0_JWKS_URI}
-    command: [ "python", "-m", "app.consumer" ]
+    command: ["python", "-m", "app.consumer"]
 
 volumes:
   db-data:
