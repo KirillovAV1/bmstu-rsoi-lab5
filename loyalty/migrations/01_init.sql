@@ -9,5 +9,5 @@ CREATE TABLE loyalty
 );
 
 INSERT INTO loyalty (id, username, reservation_count, status, discount) VALUES
-(1,'Test Max',25,'GOLD',10)
+(1,'auth0|694f268f3551c804b8257fff',25,'GOLD',10)
 ON CONFLICT (id) DO NOTHING;
