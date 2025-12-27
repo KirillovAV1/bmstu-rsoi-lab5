@@ -4,12 +4,12 @@
   "values": [
     {
       "key": "serviceUrl",
-      "value": "http://0.0.0.0:8080",
+      "value": "http://lab5.158.160.138.191.nip.io",
       "enabled": true
     },
     {
       "key": "identityProviderUrl",
-      "value": "http://0.0.0.0:8080",
+      "value": "http://lab5.158.160.138.191.nip.io",
       "enabled": true
     },
     {
