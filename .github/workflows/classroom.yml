@@ -38,6 +38,29 @@ jobs:
           curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
           echo "$HOME/yandex-cloud/bin" >> $GITHUB_PATH
 
+      - name: Debug YC_SA_KEY_B64 (safe)
+        shell: bash
+        env:
+          YC_SA_KEY_B64: ${{ secrets.YC_SA_KEY_B64 }}
+        run: |
+          set -euo pipefail
+          echo "LEN=${#YC_SA_KEY_B64}"
+          python - <<'PY'
+          import os, re, hashlib
+          s = os.environ.get("YC_SA_KEY_B64","")
+          print("empty:", s == "")
+          print("starts_with:", repr(s[:12]))
+          print("ends_with:", repr(s[-12:]))
+          bad = re.findall(r"[^A-Za-z0-9+/=]", s)
+          print("non_base64_chars_count:", len(bad))
+          if bad:
+            uniq = sorted(set(bad))
+            print("non_base64_chars_sample:", repr("".join(uniq[:20])))
+          print("sha256(prefix):", hashlib.sha256(s[:256].encode()).hexdigest())
+          PY
+          echo "${YC_SA_KEY_B64}" | head -c 80 | sed 's/./*/g'
+          echo
+
       - name: Configure yc
         shell: bash
         env:
@@ -46,13 +69,59 @@ jobs:
           YC_FOLDER_ID: ${{ secrets.YC_FOLDER_ID }}
         run: |
           set -euo pipefail
-          printf '%s' "${YC_SA_KEY_B64}" | tr -d '\r\n ' | base64 --decode > sa-key.json
-          test -s sa-key.json
+
+          echo "raw_len=${#YC_SA_KEY_B64}"
+
+          cleaned="$(printf '%s' "${YC_SA_KEY_B64}" | tr -d '\r\n ')"
+          echo "cleaned_len=${#cleaned}"
+
+          python - <<'PY'
+          import os, re
+          s=os.environ["CLEANED"]
+          bad=re.findall(r"[^A-Za-z0-9+/=]", s)
+          print("cleaned_non_base64_chars_count:", len(bad))
+          if bad:
+            print("cleaned_non_base64_chars:", sorted(set(bad))[:50])
+          PY
+        env:
+          YC_SA_KEY_B64: ${{ secrets.YC_SA_KEY_B64 }}
+          YC_CLOUD_ID: ${{ secrets.YC_CLOUD_ID }}
+          YC_FOLDER_ID: ${{ secrets.YC_FOLDER_ID }}
+          CLEANED: ${{ secrets.YC_SA_KEY_B64 }}
+
+      - name: Decode sa-key.json (debug)
+        shell: bash
+        env:
+          YC_SA_KEY_B64: ${{ secrets.YC_SA_KEY_B64 }}
+        run: |
+          set -euo pipefail
+          cleaned="$(printf '%s' "${YC_SA_KEY_B64}" | tr -d '\r\n ')"
+          if ! printf '%s' "$cleaned" | base64 --decode > sa-key.json 2> base64_err.txt; then
+            echo "base64_decode_failed"
+            echo "base64_stderr:"
+            cat base64_err.txt
+            echo "tail_of_cleaned (masked):"
+            printf '%s' "$cleaned" | tail -c 120 | sed 's/./*/g'
+            echo
+            exit 1
+          fi
+          echo "sa-key.json bytes: $(wc -c < sa-key.json)"
+          head -c 40 sa-key.json | sed 's/./*/g'
+          echo
           python - <<'PY'
           import json
           with open("sa-key.json","r",encoding="utf-8") as f:
               json.load(f)
+          print("json_ok")
           PY
+
+      - name: Configure yc (final)
+        shell: bash
+        env:
+          YC_CLOUD_ID: ${{ secrets.YC_CLOUD_ID }}
+          YC_FOLDER_ID: ${{ secrets.YC_FOLDER_ID }}
+        run: |
+          set -euo pipefail
           yc config set cloud-id "${YC_CLOUD_ID}"
           yc config set folder-id "${YC_FOLDER_ID}"
           yc config set service-account-key sa-key.json
