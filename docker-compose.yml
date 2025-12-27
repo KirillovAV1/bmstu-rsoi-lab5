@@ -1,4 +1,5 @@
 version: "3"
+
 services:
   postgres:
     image: postgres:13
@@ -23,6 +24,8 @@ services:
     restart: on-failure
     environment:
       DB_DSN: postgresql://program:test@postgres:5432/reservations
+      AUTH0_ISSUER: ${AUTH0_ISSUER}
+      AUTH0_JWKS_URI: ${AUTH0_JWKS_URI}
     depends_on:
       - postgres
     ports:
@@ -37,6 +40,8 @@ services:
     restart: on-failure
     environment:
       DB_DSN: postgresql://program:test@postgres:5432/payments
+      AUTH0_ISSUER: ${AUTH0_ISSUER}
+      AUTH0_JWKS_URI: ${AUTH0_JWKS_URI}
     depends_on:
       - postgres
     ports:
@@ -51,6 +56,8 @@ services:
     restart: on-failure
     environment:
       DB_DSN: postgresql://program:test@postgres:5432/loyalties
+      AUTH0_ISSUER: ${AUTH0_ISSUER}
+      AUTH0_JWKS_URI: ${AUTH0_JWKS_URI}
     depends_on:
       - postgres
     ports:
@@ -61,8 +68,8 @@ services:
     container_name: rabbitmq_lab5
     restart: always
     environment:
-      - RABBITMQ_DEFAULT_USER=program
-      - RABBITMQ_DEFAULT_PASS=test
+      RABBITMQ_DEFAULT_USER: program
+      RABBITMQ_DEFAULT_PASS: test
     ports:
       - "15672:15672"
       - "5672:5672"
@@ -78,10 +85,20 @@ services:
       LOYALTY_URL: http://loyalty:8050
       PAYMENT_URL: http://payment:8060
       RESERVATION_URL: http://reservation:8070
+
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: "5672"
       RABBITMQ_USER: program
       RABBITMQ_PASSWORD: test
+
+      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
+      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET}
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+
+      AUTH0_ISSUER: ${AUTH0_ISSUER}
+      AUTH0_JWKS_URI: ${AUTH0_JWKS_URI}
+
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
     depends_on:
       - loyalty
       - payment
@@ -102,7 +119,10 @@ services:
       RABBITMQ_PORT: "5672"
       RABBITMQ_USER: program
       RABBITMQ_PASSWORD: test
-    command: ["python", "-m", "app.consumer"]
+
+      AUTH0_ISSUER: ${AUTH0_ISSUER}
+      AUTH0_JWKS_URI: ${AUTH0_JWKS_URI}
+    command: [ "python", "-m", "app.consumer" ]
 
 volumes:
   db-data:
